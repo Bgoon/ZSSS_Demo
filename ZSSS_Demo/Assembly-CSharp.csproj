@@ -53,9 +53,38 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\ZSSS_Resources\Scripts\RaySSS.cs" />
      <Compile Include="Assets\ZSSS_Resources\Scripts\ZSSS.cs" />
-     <None Include="Assets\ZSSS_Resources\Shaders\SSS\PreZSSS.shader" />
+     <Compile Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\FontTextureUpdater.cs" />
+     <Compile Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Shape\PixelBoundUpdater.cs" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Shape\Circle.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Shape\Ninepatch.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\SSS\FrontDepth.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Shape\RightTriangle.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Common\Mask.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Filter\Blur.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Common\Image.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Library\Global.cginc" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Common\Vector.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Common\Texture.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Special\DoorTransparent.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Gradient\Linear_Two.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\SSS\BackDepth.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Filter\WaterDropWindow.shader" />
      <None Include="Assets\ZSSS_Resources\Shaders\SSS\ZSSS.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Blend\Add.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Gradient\Linear_Four.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Shape\Rhombus.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Common\Font.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Shape\RoundedBox.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Common\Font_Cutout.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Common\Image_Cutout.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Shape\CheckedPattern.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Filter\Distortion_Linear.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Common\AlphaColor.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Common\Color.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Filter\Distortion_Radian.shader" />
+     <None Include="Assets\ZSSS_Resources\Shaders\GKit.Shader\Shape\InnerlineBox.shader" />
  <Reference Include="Unity.Timeline.Editor">
  <HintPath>X:/Dropbox/WorkDesk/A_Unity/2019/20190527_ZSSS/ZSSS_Demo/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
  </Reference>

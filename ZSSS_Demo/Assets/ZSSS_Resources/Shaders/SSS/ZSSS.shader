@@ -1,14 +1,12 @@
-﻿Shader "Custom/ZSSS"
+﻿Shader "ZSSS/SSS"
 {
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
-        _Glossiness ("Smoothness", Range(0,1)) = 0.5
-        _Metallic ("Metallic", Range(0,1)) = 0.0
-		_Shininess ("Shiness", Float) = 10
-		_SpecColor("Specular Color", Color) = (1, 1, 1, 1)
 		_Range ("Range", Float) = 10
+		_BlurAmount("Blur Amount", Range(0, 1)) = 0.5
+		_BlurSample("Blur SampleCount", Float) = 8
     }
     SubShader
     {
@@ -18,10 +16,11 @@
 		Pass
 		{
 			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
+#pragma vertex vert
+#pragma fragment frag
 
-			#include "UnityCG.cginc"
+#include "UnityCG.cginc"
+#include "../GKit.Shader/Library/Global.cginc"
 
 			struct appdata
 			{
@@ -35,94 +34,79 @@
 				float4 vertex : SV_POSITION;
 				float2 uv : TEXCOORD0;
 				float4 worldPos : TEXCOORD1;
-				float3 normalDir : TEXCOORD2;
 			};
 
-			uniform sampler2D _LightDistanceMap;
+			uniform sampler2D _LightDistanceMap_Back;
+			uniform sampler2D _LightDistanceMap_Front;
+			uniform float4x4 _DepthCamProj;
+			uniform float4x4 _DepthCamView;
+			uniform sampler2D _MainTex;
+
 			fixed4 _Color;
 			fixed4 _LightColor0;
-			float _Shininess;
 			float _Range;
-			fixed4 _SpecColor;
+			float _BlurAmount;
+			float _BlurSample;
 
+			fixed4 SampleBlur(sampler2D tex, float2 uv) {
+				fixed4 color;
+
+				_BlurSample = floor(_BlurSample);
+				float rotSpace = 360. * Deg2Rad / _BlurSample;
+				float a = SampleNoise(uv) + rotSpace;
+				float halfBlur = _BlurAmount * 0.5;
+				for (int sampleI = 0; sampleI < _BlurSample; ++sampleI) {
+					float2 offset = float2(sin(a) - halfBlur, cos(a) - halfBlur) * _BlurAmount * 0.1;
+					color += tex2D(tex, uv + offset);
+					a += rotSpace;
+				}
+				color /= _BlurSample;
+				return color;
+			}
 			v2f vert(appdata v)
 			{
 				v2f o;
 				o.vertex = UnityObjectToClipPos(v.vertex);
-				o.uv = v.uv;
 				o.worldPos = mul(unity_ObjectToWorld, v.vertex);
-				o.normalDir = normalize(mul(float4(v.normal, 0.0), unity_WorldToObject).xyz);
+				o.uv = v.uv;
 				return o;
 			}
-
 			fixed4 frag(v2f i) : SV_Target
 			{
-				float3 normalDirection = normalize(i.normalDir);
+				float4 cameraPos = mul(mul(_DepthCamProj, _DepthCamView), i.worldPos);
+				float2 lightUv = (cameraPos.xy / cameraPos.w + 1) * 0.5;
+				float distBack = SampleBlur(_LightDistanceMap_Back, lightUv).r; //tex2D(_LightDistanceMap_Back, lightUv).r;
+				float distFront = SampleBlur(_LightDistanceMap_Front, lightUv).r;
 
-				float3 viewDirection = normalize(
-				   _WorldSpaceCameraPos - i.worldPos.xyz);
-				float3 lightDirection;
-				float attenuation;
+				float thickness = abs(distBack - distFront) / 1.2;
+				float fakeColor = 1.0 - thickness;
 
-				if (0.0 == _WorldSpaceLightPos0.w) // directional light?
-				{
-				   attenuation = 1.0; // no attenuation
-				   lightDirection = normalize(_WorldSpaceLightPos0.xyz);
-				}
-				else // point or spot light
-				{
-				   float3 vertexToLightSource =
-					  _WorldSpaceLightPos0.xyz - i.worldPos.xyz;
-				   float distance = length(vertexToLightSource);
-				   attenuation = 1.0 / distance; // linear attenuation 
-				   lightDirection = normalize(vertexToLightSource);
-				}
+				/*if (thickness < 0.0) {
+					return fixed4(0, 0, 0, 1);
+				}*/
+				fakeColor = pow(fakeColor * 0.9, 1.5);
+				
+				fixed4 col = fixed4(fakeColor, fakeColor, fakeColor, 1);
+				col *= _Color;
 
-				float3 ambientLighting =
-				   UNITY_LIGHTMODEL_AMBIENT.rgb * _Color.rgb;
+				fixed3 hsv = ColorToHSV(col.rgb);
+				hsv.x += fakeColor * 0.2;
+				hsv.y *= 1 - pow(fakeColor, 3);
+				col.rgb = HSVToColor(hsv);
 
-				float3 diffuseReflection =
-				   attenuation * _LightColor0.rgb * _Color.rgb
-				   * max(0.0, dot(normalDirection, lightDirection));
-
-				float3 specularReflection;
-				if (dot(normalDirection, lightDirection) < 0.0)
-					// light source on the wrong side?
-				 {
-					specularReflection = float3(0.0, 0.0, 0.0);
-					// no specular reflection
-				}
-				else // light source on the right side
-				{
-					specularReflection = attenuation * _LightColor0.rgb
-					* _SpecColor.rgb * pow(max(0.0, dot(
-					reflect(-lightDirection, normalDirection),
-					viewDirection)), _Shininess);
-				}
+				return col;
 
 				//from light to current frag
-				float distFront = (_Range - distance(i.worldPos.xyz, _WorldSpaceLightPos0.xyz)) / _Range;
-				float distBack = (_Range - tex2D(_LightDistanceMap, i.uv).r) / _Range;
-				distBack *= 0.4;
-				distBack = pow(saturate(distBack), 3);
+				//float distFront = (_Range - distance(i.worldPos.xyz, _WorldSpaceLightPos0.xyz)) / _Range;
+				//float distBack = (_Range - tex2D(_LightDistanceMap, i.uv).r) / _Range;
+				//distBack *= 0.4;
+				//distBack = pow(saturate(distBack), 3);
 
-				//return fixed4(distBack, 0, 0, 1);
-				float thickness = abs(distBack - distFront);
-				thickness = saturate(distFront - distBack);
-				thickness = pow(thickness, 5);
-				//return fixed4(thickness, thickness, thickness, 1);
+				//float thickness = abs(distBack - distFront);
 
-				fixed4 debugColor = fixed4(thickness, thickness, thickness, 1);
-				debugColor *= _Color;
-				debugColor.rgb += ambientLighting * 0.3 + diffuseReflection * max(0.05 - thickness, 0) + specularReflection;
-				return debugColor;
-
-				if (thickness < 0)
-					return fixed4(-thickness, 0, 0, 1);
-				else
-					return fixed4(0, thickness, 0, 1);
-
-				return fixed4(thickness, thickness, thickness, 1);
+				//fixed4 debugColor = fixed4(distBack, distBack, distBack, 1);
+				//debugColor *= _Color;
+				//return debugColor;
 			}
 		ENDCG
 		}

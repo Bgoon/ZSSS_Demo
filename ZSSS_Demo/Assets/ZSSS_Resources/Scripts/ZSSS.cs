@@ -4,10 +4,13 @@ using UnityEngine;
 
 public class ZSSS : MonoBehaviour {
 
-	public Shader replacementShader;
-	public Renderer debugDepthRenderer;
 	public Transform lightTransform;
-	private CustomRenderTexture depthMap;
+	public Vector2Int rtResolution;
+
+	//Back, Front
+	public Shader[] depthShaders;
+	public Renderer[] debugDepthRenderers;
+	private CustomRenderTexture[] depthMaps;
 	private Camera depthCam;
 
 	private void Start() {
@@ -24,23 +27,28 @@ public class ZSSS : MonoBehaviour {
 		depthCam.clearFlags = CameraClearFlags.Color;
 		depthCam.enabled = false;
 		depthCam.farClipPlane = 40f;
-		depthCam.SetReplacementShader(replacementShader, "RenderType");
 
 		//Create RT
-		depthMap = new CustomRenderTexture(512, 512, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear);
-		if(debugDepthRenderer != null) {
-			debugDepthRenderer.material.SetTexture("_MainTex", depthMap);
+		depthMaps = new CustomRenderTexture[2];
+		for (int i=0; i<depthMaps.Length; ++i) {
+			CustomRenderTexture rt = depthMaps[i] = CreateRT();
+			debugDepthRenderers[i].material.SetTexture("_MainTex", rt);
 		}
-		depthCam.targetTexture = depthMap;
 	}
-
 	private void Update() {
-		depthCam.Render();
+		for(int i=0; i<depthMaps.Length; ++i) {
+			depthCam.targetTexture = depthMaps[i];
+			depthCam.SetReplacementShader(depthShaders[i], "RenderType");
+			depthCam.Render();
+		}
+
 		Shader.SetGlobalMatrix("_DepthCamProj", depthCam.projectionMatrix);
 		Shader.SetGlobalMatrix("_DepthCamView", depthCam.worldToCameraMatrix);
-		Shader.SetGlobalTexture("_LightDistanceMap", depthMap);
+		Shader.SetGlobalTexture("_LightDistanceMap_Back", depthMaps[0]);
+		Shader.SetGlobalTexture("_LightDistanceMap_Front", depthMaps[1]);
 	}
-	//private void OnRenderImage(RenderTexture src, RenderTexture dst) {
-	//	Graphics.Blit(src, )
-	//}
+
+	private CustomRenderTexture CreateRT() {
+		return new CustomRenderTexture(rtResolution.x, rtResolution.y, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear);
+	}
 }

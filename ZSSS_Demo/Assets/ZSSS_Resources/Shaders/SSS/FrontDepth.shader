@@ -1,6 +1,4 @@
-﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-Shader "Unlit/PreZSSS"
+﻿Shader "ZSSS/FrontDepth"
 {
 	Properties
 	{
@@ -9,9 +7,9 @@ Shader "Unlit/PreZSSS"
 		SubShader
 	{
 		Tags { "RenderType" = "ZSSS" }
-		Cull Off
-		ZWrite Off
-		ZTest Off
+		Cull Back
+		ZWrite On
+		ZTest Less
 
 		Pass
 		{
@@ -30,22 +28,20 @@ Shader "Unlit/PreZSSS"
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
-				float4 worldPos : TEXCOORD1;
+				float4 worldPos : TEXCOORD0;
 			};
 
 			v2f vert(appdata v)
 			{
 				v2f o;
-				float2 uv = v.uv - 0.5;// *2 - 2;
-				uv *= float2(2., -2.);
-				o.vertex = float4(uv, 0, 1);
+				o.vertex = UnityObjectToClipPos(v.vertex);
 				o.worldPos = mul(unity_ObjectToWorld, v.vertex);
 				return o;
 			}
 
 			float frag(v2f i) : SV_Target
 			{
-				return distance(i.worldPos.xyz, _WorldSpaceLightPos0.xyz) * 0.3;
+				return distance(i.worldPos.xyz, _WorldSpaceLightPos0.xyz);
 			}
 		ENDCG
 		}
